@@ -1,7 +1,7 @@
 // Simple service worker: makes the app installable and lets the page shell open offline.
 // Job data always comes live from the server, so we never cache API calls.
-const CACHE = "job-tracker-v1";
-const SHELL = ["/", "/icon-192.png", "/icon-512.png"];
+const CACHE = "job-tracker-v2";
+const SHELL = ["/", "/jobtracker-app-192.png", "/jobtracker-app-512.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
