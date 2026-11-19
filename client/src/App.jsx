@@ -3,6 +3,7 @@ import { useAuth } from "./AuthContext.jsx";
 import Auth from "./pages/Auth.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Jobs from "./pages/Jobs.jsx";
+import Profile from "./pages/Profile.jsx";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -23,6 +24,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Protected><Dashboard /></Protected>} />
       <Route path="/find" element={<Protected><Jobs /></Protected>} />
+      <Route path="/profile" element={<Protected><Profile /></Protected>} />
       <Route path="/login" element={<GuestOnly><Auth mode="login" /></GuestOnly>} />
       <Route path="/register" element={<GuestOnly><Auth mode="register" /></GuestOnly>} />
       <Route path="*" element={<Navigate to="/" replace />} />
