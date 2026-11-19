@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
-import Topbar from "../components/Topbar.jsx";
+import Layout from "../components/Layout.jsx";
 
 const QUICK = ["front end", "react", "javascript", "full stack", "node"];
+const SOURCES = [
+  { key: "", label: "All sources" },
+  { key: "remoteok", label: "Remote OK" },
+  { key: "jobicy", label: "Jobicy" },
+  { key: "arbeitnow", label: "Arbeitnow" },
+];
 
 function timeAgo(date) {
   if (!date) return "";
@@ -14,9 +20,10 @@ function timeAgo(date) {
 
 export default function Jobs() {
   const [draft, setDraft] = useState("front end");
-  const [params, setParams] = useState({ q: "front end", junior: true, region: true });
+  const [params, setParams] = useState({ q: "front end", junior: true, region: true, source: "" });
   const [jobs, setJobs] = useState([]);
   const [total, setTotal] = useState(0);
+  const [failed, setFailed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [savedLinks, setSavedLinks] = useState(new Set());
@@ -37,11 +44,13 @@ export default function Jobs() {
       q: params.q,
       junior: params.junior ? "1" : "0",
       region: params.region ? "1" : "0",
+      sources: params.source,
     });
     api("/api/remote?" + qs.toString())
       .then((d) => {
         setJobs(d.jobs);
         setTotal(d.total);
+        setFailed(d.failed || []);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -69,7 +78,7 @@ export default function Jobs() {
           link: job.url,
           location: job.location || "Remote",
           salary: job.salary,
-          source: "Remote OK",
+          source: job.source || "Remote OK",
           status: "saved",
         },
       });
@@ -82,8 +91,7 @@ export default function Jobs() {
   }
 
   return (
-    <div className="page">
-      <Topbar />
+    <Layout>
 
       <h2>Find remote jobs</h2>
       <p className="muted small">Live remote jobs. Tap "Save to board" to track one.</p>
@@ -97,6 +105,14 @@ export default function Jobs() {
         {QUICK.map((w) => (
           <button key={w} type="button" className={"chip" + (params.q === w ? " on" : "")} onClick={() => quick(w)}>
             {w}
+          </button>
+        ))}
+      </div>
+
+      <div className="chips">
+        {SOURCES.map((s) => (
+          <button key={s.key} type="button" className={"chip" + (params.source === s.key ? " on" : "")} onClick={() => setParams({ ...params, source: s.key })}>
+            {s.label}
           </button>
         ))}
       </div>
@@ -115,6 +131,9 @@ export default function Jobs() {
       {error && <p className="error">{error}</p>}
       {loading && <p className="muted">Loading jobs...</p>}
       {!loading && !error && <p className="muted small">Showing {jobs.length} of {total} jobs</p>}
+      {!loading && failed.length > 0 && (
+        <p className="muted small">Could not reach {failed.join(", ")} just now. Showing the other sources.</p>
+      )}
 
       <div className="results">
         {jobs.map((job) => {
@@ -125,6 +144,7 @@ export default function Jobs() {
                 <b>{job.title}</b>
                 <p className="muted">{job.company}</p>
                 <div className="meta">
+                  <span className="src">{job.source}</span>
                   <span>{job.location || "Remote"}</span>
                   {job.salary && <span>{job.salary}</span>}
                   {job.date && <span>{timeAgo(job.date)}</span>}
@@ -150,8 +170,11 @@ export default function Jobs() {
       )}
 
       <p className="muted small credit">
-        Jobs come from <a href="https://remoteok.com" target="_blank" rel="noopener noreferrer">Remote OK</a>. Always check the job post before you apply.
+        Jobs come from{" "}
+        <a href="https://remoteok.com" target="_blank" rel="noopener noreferrer">Remote OK</a>,{" "}
+        <a href="https://jobicy.com" target="_blank" rel="noopener noreferrer">Jobicy</a> and{" "}
+        <a href="https://www.arbeitnow.com" target="_blank" rel="noopener noreferrer">Arbeitnow</a>. Always check the job post before you apply.
       </p>
-    </div>
+    </Layout>
   );
 }
