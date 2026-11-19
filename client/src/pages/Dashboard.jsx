@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api.js";
+import { useAuth } from "../AuthContext.jsx";
 import JobForm from "../components/JobForm.jsx";
 import JobCard from "../components/JobCard.jsx";
-import Topbar from "../components/Topbar.jsx";
+import Layout from "../components/Layout.jsx";
 
 const STAGES = [
   { key: "saved", label: "Saved" },
@@ -13,6 +14,7 @@ const STAGES = [
 ];
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -72,18 +74,32 @@ export default function Dashboard() {
 
   const countOf = (key) => jobs.filter((j) => j.status === key).length;
 
+  // Applications sent in the last 7 days, compared with the weekly goal
+  const weekAgo = Date.now() - 7 * 86400000;
+  const thisWeek = jobs.filter((j) => j.appliedDate && new Date(j.appliedDate).getTime() >= weekAgo).length;
+  const goal = user.weeklyGoal || 5;
+  const pct = Math.min(100, Math.round((thisWeek / goal) * 100));
+
   return (
-    <div className="page">
-      <Topbar />
+    <Layout>
 
       <div className="toolbar">
         <h2>Your jobs ({jobs.length})</h2>
         <button className="btn small-btn" onClick={() => setEditing({})}>+ Add job</button>
       </div>
 
+      <div className="card goal">
+        <div className="goal-top">
+          <b>Weekly goal</b>
+          <span className="muted small">{thisWeek} of {goal} applications in the last 7 days</span>
+        </div>
+        <div className="bar"><div className="bar-fill" style={{ width: pct + "%" }} /></div>
+        {thisWeek >= goal && <p className="ok small">Goal reached. Great work!</p>}
+      </div>
+
       <div className="stat-grid">
         {STAGES.map((s) => (
-          <div className="card stat" key={s.key}>
+          <div className="card stat" data-stage={s.key} key={s.key}>
             <b>{countOf(s.key)}</b>
             <span>{s.label}</span>
           </div>
@@ -112,7 +128,7 @@ export default function Dashboard() {
           {STAGES.map((s) => {
             const col = visible.filter((j) => j.status === s.key);
             return (
-              <section className="column" key={s.key}>
+              <section className="column" data-stage={s.key} key={s.key}>
                 <h3>{s.label} <span className="muted">({col.length})</span></h3>
                 {col.length === 0 && <p className="muted small">Nothing here</p>}
                 {col.map((job) => (
@@ -125,6 +141,6 @@ export default function Dashboard() {
       )}
 
       {editing && <JobForm job={editing} onSave={saveJob} onCancel={() => setEditing(null)} />}
-    </div>
+    </Layout>
   );
 }
