@@ -19,7 +19,7 @@ export default function JobCard({ job, onMove, onEdit, onDelete }) {
   const href = job.link ? (/^https?:\/\//i.test(job.link) ? job.link : "https://" + job.link) : "";
 
   return (
-    <div className="card job">
+    <div className="card job" data-stage={job.status}>
       <b className="job-title">{job.title}</b>
       <span className="muted">{job.company}</span>
 
